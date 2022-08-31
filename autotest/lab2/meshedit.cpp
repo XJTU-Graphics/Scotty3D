@@ -136,57 +136,7 @@ std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::collapse_face(Halfedge_Me
     flipped edge.
 */
 std::optional<Halfedge_Mesh::EdgeRef> Halfedge_Mesh::flip_edge(Halfedge_Mesh::EdgeRef e) {
-    if (e->on_boundary())
-        return std::nullopt;
-
-    // info("---start flipping edge %u---", e->id());
-    HalfedgeRef h = e->halfedge();
-    HalfedgeRef h_twin = h->twin();
-    HalfedgeRef h_2_3 = h->next();
-    HalfedgeRef h_3_1 = h_2_3->next();
-    HalfedgeRef h_1_4 = h_twin->next();
-    HalfedgeRef h_4_2 = h_1_4->next();
-    // v1 and v2 are vertices along the edge
-    VertexRef v1 = h->vertex();
-    VertexRef v2 = h_twin->vertex();
-    // v3 and v4 are vertices opposite the edge
-    VertexRef v3 = h_3_1->vertex();
-    VertexRef v4 = h_4_2->vertex();
-    FaceRef f1 = h->face();
-    FaceRef f2 = h_twin->face();
-    // info("(v1, v2) (%u, %u)", v1->id(), v2->id());
-    // info("(v3, v4) (%u, %u)", v3->id(), v4->id());
-
-    // Rotate the edge
-    h->next() = h_3_1;
-    h->vertex() = v4;
-    h_twin->next() = h_4_2;
-    h_twin->vertex() = v3;
-    // Re-connect other halfedges
-    h_3_1->next() = h_1_4;
-    h_1_4->next() = h;
-    h_1_4->face() = f1;
-    h_4_2->next() = h_2_3;
-    h_2_3->next() = h_twin;
-    h_2_3->face() = f2;
-    // Update vertices
-    v1->halfedge() = h_1_4;
-    v2->halfedge() = h_2_3;
-    // Update faces
-    f1->halfedge() = h_3_1;
-    f2->halfedge() = h_4_2;
-
-    // info("face 1 2 3: %u->%u->%u", f1->halfedge()->vertex()->id(),
-    //         f1->halfedge()->next()->vertex()->id(),
-    //         f1->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("face 2 1 4: %u->%u->%u", f2->halfedge()->vertex()->id(),
-    //         f2->halfedge()->next()->vertex()->id(),
-    //         f2->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("---end---");
-
-    return e;
+    return std::nullopt;
 }
 
 /*
@@ -195,90 +145,7 @@ std::optional<Halfedge_Mesh::EdgeRef> Halfedge_Mesh::flip_edge(Halfedge_Mesh::Ed
     the edge that was split, rather than the new edges.
 */
 std::optional<Halfedge_Mesh::VertexRef> Halfedge_Mesh::split_edge(Halfedge_Mesh::EdgeRef e) {
-    HalfedgeRef h = e->halfedge();
-    HalfedgeRef h_twin = h->twin();
-    // 2 faces adjacent to the given edge.
-    FaceRef f1 = h->face();
-    FaceRef f2 = h_twin->face();
-    // v1 and v2 are vertices connected by the given edge.
-    // VertexRef v1 = h->vertex();
-    // VertexRef v2 = h_twin->vertex();
-    // v3 and v4 are opposite vertices of the given edge.
-    VertexRef v3 = h->next()->twin()->vertex();
-    VertexRef v4 = h_twin->next()->twin()->vertex();
-    // info("---start splitting edge %u---", e->id());
-    // info("halfedge (%u, %u)", h->id(), h_twin->id());
-    // info("(v1, v2) (%u, %u)", v1->id(), v2->id());
-    // info("(v3, v4) (%u, %u)", v3->id(), v4->id());
-
-    // Add new halfedges.
-    HalfedgeRef &h_1_new = h;
-    HalfedgeRef h_new_3 = new_halfedge();
-    HalfedgeRef h_3_new = new_halfedge();
-    HalfedgeRef h_new_2 = new_halfedge();
-    HalfedgeRef h_3_1 = h->next()->next();
-    HalfedgeRef h_2_3 = h->next();
-    HalfedgeRef &h_2_new = h_twin;
-    HalfedgeRef h_new_4 = new_halfedge();
-    HalfedgeRef h_4_new = new_halfedge();
-    HalfedgeRef h_new_1 = new_halfedge();
-    HalfedgeRef h_4_2 = h_twin->next()->next();
-    HalfedgeRef h_1_4 = h_twin->next();
-    // Add a new vertex.
-    VertexRef v_new = new_vertex();
-    v_new->is_new = true;
-    v_new->pos = e->new_pos;
-    v_new->halfedge() = h_new_2;
-    // Add new edges.
-    EdgeRef e_new_2 = new_edge();
-    EdgeRef e_new_3 = new_edge();
-    EdgeRef e_new_4 = new_edge();
-    e_new_2->halfedge() = h_twin;
-    e_new_3->halfedge() = h_3_new;
-    e_new_4->halfedge() = h_new_4;
-    e_new_3->is_new = e_new_4->is_new = true;
-    // Add new faces.
-    FaceRef f_new_2_3 = new_face();
-    FaceRef f_new_1_4 = new_face();
-    f1->halfedge() = h_1_new;
-    f_new_2_3->halfedge() = h_new_2;
-    f2->halfedge() = h_2_new;
-    f_new_1_4->halfedge() = h_new_1;
-    // Set neighbors of halfedges.
-    h_1_new->next() = h_new_3;
-    h_1_new->twin() = h_new_1;
-    h_2_3->face() = f_new_2_3;
-    h_new_3->set_neighbors(h_3_1, h_3_new, v_new, e_new_3, f1);
-    h_3_new->set_neighbors(h_new_2, h_new_3, v3, e_new_3, f_new_2_3);
-    h_new_2->set_neighbors(h_2_3, h_2_new, v_new, e_new_2, f_new_2_3);
-    h_2_3->next() = h_3_new;
-    h_2_new->next() = h_new_4;
-    h_2_new->twin() = h_new_2;
-    h_2_new->edge() = e_new_2;
-    h_1_4->face() = f_new_1_4;
-    h_new_4->set_neighbors(h_4_2, h_4_new, v_new, e_new_4, f2);
-    h_4_new->set_neighbors(h_new_1, h_new_4, v4, e_new_4, f_new_1_4);
-    h_new_1->set_neighbors(h_1_4, h_1_new, v_new, e, f_new_1_4);
-    h_1_4->next() = h_4_new;
-    // info("face 1 new 3: %u->%u->%u", f1->halfedge()->vertex()->id(),
-    //         f1->halfedge()->next()->vertex()->id(),
-    //         f1->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("face new 2 3: %u->%u->%u", f_new_2_3->halfedge()->vertex()->id(),
-    //         f_new_2_3->halfedge()->next()->vertex()->id(),
-    //         f_new_2_3->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("face 2 new 4: %u->%u->%u", f2->halfedge()->vertex()->id(),
-    //         f2->halfedge()->next()->vertex()->id(),
-    //         f2->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("face new 1 4: %u->%u->%u", f_new_1_4->halfedge()->vertex()->id(),
-    //         f_new_1_4->halfedge()->next()->vertex()->id(),
-    //         f_new_1_4->halfedge()->next()->next()->vertex()->id()
-    //     );
-    // info("---end---");
-
-    return v_new;
+    return std::nullopt;
 }
 
 
@@ -621,41 +488,9 @@ void Halfedge_Mesh::loop_subdivide() {
     // the Loop subdivision rule and store them in Vertex::new_pos.
     //    At this point, we also want to mark each vertex as being a vertex of the
     //    original mesh. Use Vertex::is_new for this.
-    static const float u1 = 3.0f / 16.0f;
-    for (VertexRef vert = vertices_begin(); vert != vertices_end(); ++vert) {
-        vert->is_new = false;
-        unsigned int n = 0;
-        HalfedgeCRef h = vert->halfedge();
-        Vec3 neighbor_sum(0.0f);
-        do {
-            neighbor_sum += h->twin()->vertex()->pos;
-            ++n;
-            h = h->twin()->next();
-        } while (h != vert->halfedge());
-
-        float u = n == 3? u1 : (3.0f / (8.0f * n));
-        vert->new_pos = (1.0f - n * u) * vert->pos
-                      + u * neighbor_sum;
-    }
     
     // Next, compute the subdivided vertex positions associated with edges, and
     // store them in Edge::new_pos.
-    static const float w_neighbor = 3.0f / 8.0f;
-    static const float w_opposite = 1.0f / 8.0f;
-    for (EdgeRef edge = edges_begin(); edge != edges_end(); ++edge) {
-        edge->is_new = false;
-        HalfedgeCRef h = edge->halfedge();
-        HalfedgeCRef h_twin = h->twin();
-        // Access 2 neighbor vertices.
-        VertexCRef neighbor1 = h->vertex();
-        VertexCRef neighbor2 = h->twin()->vertex();
-        // Access 2 opposite vertices.
-        VertexCRef opposite1 = h->next()->twin()->vertex();
-        VertexCRef opposite2 = h_twin->next()->twin()->vertex();
-        // Calculate the new position
-        edge->new_pos = w_neighbor * (neighbor1->pos + neighbor2->pos)
-                      + w_opposite * (opposite1->pos + opposite2->pos);
-    }
     
     // Next, we're going to split every edge in the mesh, in any order.
     // We're also going to distinguish subdivided edges that came from splitting 
@@ -663,37 +498,10 @@ void Halfedge_Mesh::loop_subdivide() {
     // Note that in this loop, we only want to iterate over edges of the original mesh.
     // Otherwise, we'll end up splitting edges that we just split (and the
     // loop will never end!)
-    // I use a vector to store iterators of original because there are three kinds of
-    // edges: original edges, edges split from original edges and newly added edges.
-    // The newly added edges are marked with Edge::is_new property, so there is not
-    // any other property to mark the edges I just split.
-    std::vector<EdgeRef> original_edges;
-    original_edges.reserve(edges.size());
-    for (EdgeRef edge = edges_begin(); edge != edges_end(); ++edge) {
-        original_edges.push_back(edge);
-    }
-    for (auto it = original_edges.begin(); it != original_edges.end(); ++it) {
-        split_edge(*it);
-    }
     
     // Now flip any new edge that connects an old and new vertex.
-    for (EdgeRef edge = edges_begin(); edge != edges_end(); ++edge) {
-        if (!edge->is_new)
-            continue;
-        HalfedgeCRef h = edge->halfedge();
-        bool v1_isnew = h->vertex()->is_new;
-        bool v2_isnew = h->twin()->vertex()->is_new;
-        if (v1_isnew != v2_isnew) {
-            flip_edge(edge);
-        }
-    }
     
     // Finally, copy new vertex positions into the Vertex::pos.
-    for (VertexRef vert = vertices_begin(); vert != vertices_end(); ++vert) {
-        if (vert->is_new)
-            continue;
-        vert->pos = vert->new_pos;
-    }
 }
 
 /*

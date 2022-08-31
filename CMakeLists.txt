@@ -197,7 +197,7 @@ else()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(Scotty3D PRIVATE -fno-omit-frame-pointer)
+    target_compile_options(Scotty3D PRIVATE -fno-omit-frame-pointer -Wno-bitwise-instead-of-logical)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
     set(CMAKE_LINKER_FLAGS_DEBUG "${CMAKE_LINKER_FLAGS_DEBUG} -fsanitize=address")
 endif()

@@ -16,6 +16,9 @@ settings.json
 .vscode/*.json
 .sublime/
 .DS_Store
+*.cache/
+*.clangd
+*.swp
 media/test.*
 media/env_maps/
 media/test/

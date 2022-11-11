@@ -37,6 +37,7 @@ set_target_properties(autotest2 PROPERTIES
     CXX_STANDARD 17
     CXX_EXTENSIONS OFF
 )
+file(COPY ${PROJECT_SOURCE_DIR}/std DESTINATION ${PROJECT_BINARY_DIR})
 
 if(MSVC)
     target_compile_options(autotest2 PRIVATE /MP /W4 /WX /wd4201 /wd4840 /wd4100 /wd4505 /fp:fast)

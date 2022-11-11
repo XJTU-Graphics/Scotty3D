@@ -75,7 +75,7 @@ bool test_edges(
 tuple<vector<Vec3>, set<EdgePair>> load_std(const string &name)
 {
     using namespace std::string_literals;
-    string std_path = "../std/"s + name + ".txt"s;
+    string std_path = "./std/"s + name + ".txt"s;
     FILE *std_file = std::fopen(std_path.c_str(), "r");
     size_t n_vertices, n_faces;
     vector<Vec3> vertices;
